@@ -4,14 +4,33 @@ import {
   Text,
   View,
   TextInput,
-
+  TouchableOpacity,
+  ScrollView,
 } from 'react-native';
+import axios from 'axios';
+
+const BASE_URL = 'https://api.lyrics.ovh/v1/'
 
 class App extends React.Component {
-  state = { artist: '', title: '' }
+  state = { artist: '', title: '', lyrics: '' }
+
+  getLyrics = () => {
+    const { artist, title } = this.state;
+    axios.get(`${BASE_URL}${artist}/${title}`)
+      .then( ({ data }) => {
+        this.setState({
+          artist: '',
+          title: '',
+          lyrics: data.lyrics
+        })
+      }).catch( err => {
+        const lyrics = `Could not find the song ${title} by ${artist}`
+        this.setState({ lyrics })
+      })
+  }
 
   render() {
-    const { artist, title } = this.state;
+    const { artist, title, lyrics } = this.state;
 
     return (
       <View style={styles.container}>
@@ -30,17 +49,51 @@ class App extends React.Component {
           style={styles.input}
           onChangeText={ (title) => this.setState({ title }) }
         />
+        { (artist !== '' && title !== '') &&
+            <TouchableOpacity onPress={this.getLyrics}>
+              <Text style={styles.button}>Get Lyrics</Text>
+            </TouchableOpacity>
+        }
+        <ScrollView style={
+          lyrics ? styles.lyrics : {}
+        }>
+          <Text style={styles.lyricText}>
+            {lyrics}
+          </Text>
+        </ScrollView>
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
+  lyrics: {
+    marginBottom: 30,
+    marginLeft: 5,
+    marginRight: 5,
+    borderRadius: 5,
+    backgroundColor: 'white',
+  },
+  lyricText: {
+    fontSize: 20,
+    padding: 5,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
     backgroundColor: '#50C878',
     justifyContent: 'flex-start',
     paddingTop: 80,
+  },
+  button: {
+    alignSelf: 'stretch',
+    textAlign: 'center',
+    height: 40,
+    backgroundColor: 'black',
+    color: 'white',
+    fontSize: 30,
+    margin: 5,
   },
   input: {
     height: 50,
